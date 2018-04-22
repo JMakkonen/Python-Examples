@@ -1,2 +1,3 @@
 # Python-Examples
 This has some various Python programs mostly with Tkinter
+THe file called "FlowSim" is a python program that simulates a tank being filled by a valve that is in proportional control.  However, there seems to be some buggy things about the control mechanism as it seems like there is not enough resolution to allow it to be in an intermediate position, it seems to like moving in the tenths steps only.  Also, it seems that the coefficients produce a very unstable flow situation.  Clearly this process is in need of tuning badly but I've forgotten these things I learned 25 years ago about control strategies.
