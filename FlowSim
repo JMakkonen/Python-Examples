@@ -1,0 +1,132 @@
+# P10xx, number to be assigned since I am writing this on the PC and not the Pi.# This is an attempt at animating a control loop
+
+from Tkinter import *
+from math import *
+from time import sleep
+from random import randint
+class App:    
+    def __init__(self, master):
+        ## Set up Frames        
+        frame = Frame(master)        
+        control_frame = Frame(frame)        
+        control_frame.grid(row = 0, column = 0, sticky = N)        
+        canvas_frame = Frame(frame)        
+        canvas_frame.grid(row =0, column = 1)
+        #variables        
+        self.v_lvl = DoubleVar()        
+        self.v_lvl.set(50.0)        
+        self.v_pcoeff = DoubleVar()        
+        self.v_pcoeff.set(1.0)        
+        self.v_outlet = DoubleVar()       
+        self.v_outlet.set(5)       
+        self.v_valve = DoubleVar()        
+        self.v_valve.set(.5)        
+        self.liq_col = 'blue'
+        #Control Frame Widget examples        
+        b1 = Button(control_frame, text='Start', command=self.start_it)       
+        b1.pack(side = TOP)        
+        b3 = Button(control_frame, text='Stop', command=self.stop_it)        
+        b3.pack(side = TOP)        
+        b2 = Button(control_frame, text="Quit", command=self.quit_app)        
+        b2.pack(side = TOP)        
+        Label(control_frame, text="Select time delay").pack(side = TOP)                      
+        self.time_scale = Scale(control_frame, from_=0.01, to=1,                           
+        orient=HORIZONTAL, resolution=0.01,                           
+        command=self.change_speed)        
+        self.time_scale.set(.1)        
+        self.time_scale.pack(side = TOP)        
+        Label(control_frame, text="Level Set Point for tank").pack(side=TOP)        
+        self.level_scale = Scale(control_frame, from_=10, to=90,                            
+        orient=HORIZONTAL)        
+        self.level_scale.set(50)        
+        self.level_scale.pack(side=TOP)       
+        Label(control_frame, text="Select Proportionality").pack(side = TOP)        
+        self.pcoeff_scale = Scale(control_frame, from_=0.25, to=2,                             
+        orient=HORIZONTAL, resolution=0.25)        
+        self.pcoeff_scale.set(1.0)        
+        self.pcoeff_scale.pack(side = TOP)        
+        Label(control_frame, text="Outlet rate").pack(side = TOP)        
+        self.outlet_scale = Scale(control_frame, from_=1, to=10,                             
+        orient=HORIZONTAL)        
+        self.outlet_scale.set(5)        
+        self.outlet_scale.pack(side = TOP)                
+        # Menus        
+        menubar = Menu(root)                
+        menu_1 = Menu(menubar, tearoff=0)        
+        menu_1.add_command(label='Quit',command=self.quit_app)        
+        menubar.add_cascade(label='File', menu=menu_1)        
+        menu_2 = Menu(menubar, tearoff=0)        
+        menu_2.add_command(label='Red',command=self.turn_red)        
+        menu_2.add_command(label='Black',command=self.turn_black)        
+        menu_2.add_command(label='Blue',command=self.turn_blue)        
+        menubar.add_cascade(label='Color', menu=menu_2)
+        master.config(menu=menubar)
+        # The canvas        
+        self.can = Canvas(canvas_frame, width = 400, height = 400,                             
+        bg='white')        
+               
+        self.can.pack()        
+        frame.pack()        
+        self.initial_draw()
+    def start_it(self, event=None):        
+        global stopped        
+        global speed        
+        stopped = False        
+        while (not stopped):            
+            self.v_lvl.set(self.v_lvl.get()+self.v_valve.get()*10-                           
+            self.outlet_scale.get())            
+            v_vtar=((self.level_scale.get()-self.v_lvl.get())*                            
+            self.pcoeff_scale.get())            
+            if v_vtar > 1.0:                
+                v_vtar = 1.0            
+            if v_vtar < 0.0:                
+                v_vtar = 0.0            
+            if abs(v_vtar-self.v_valve.get()) > 0.1:                
+                self.v_valve.set(copysign(0.1,v_vtar-self.v_valve.get())+                                 
+                self.v_valve.get())           
+            else:                
+                self.v_valve.set(v_vtar)            
+            self.can.delete(self.water)            
+            self.water=self.can.create_rectangle(110,390-self.v_lvl.get()*1.8,290,390,                                      
+            fill=self.liq_col)            
+            self.can.delete(self.valve_open)            
+            self.valve_open = self.can.create_text(75,55,text=self.v_valve.get())            
+            self.can.update()            
+            sleep(speed)
+    def stop_it(self, event=None):        
+        global stopped        
+        stopped = True        
+        return
+    def change_speed(self, event=None):        
+        global speed        
+        speed = self.time_scale.get()
+    def turn_red(self, event=None):        
+        self.liq_col='red'
+    def turn_black(self, event=None):        
+        self.liq_col='black'
+    def turn_blue(self, event=None):        
+        self.liq_col='blue'
+    def initial_draw(self):        
+        self.can.create_line(0,100,160,100)        
+        self.can.create_line(0,110,150,110)        
+        self.can.create_line(160,100,160,200)        
+        self.can.create_line(150,110,150,200)        
+        self.can.create_rectangle(100,200,300,400,fill='white')        
+        self.can.create_line(300,390,400,390)        
+        self.can.create_line(300,380,400,380)        
+        self.water = self.can.create_rectangle(110,210,290,390,fill='blue')        
+        self.valve_open = self.can.create_text(75,55,text=self.v_valve.get())        
+        self.gif1 = PhotoImage(file='valve.gif')        
+        self.can.create_image(75,75,image=self.gif1,anchor=NW)        
+        self.can.create_image(325,355,image=self.gif1,anchor=NW)
+    def quit_app(self, event=None):        
+        global stopped        
+        stopped = True        
+        sleep(0.25)        
+        root.destroy()                                    
+stopped = True
+speed = 0.1
+root = Tk()
+root.wm_title('Flow simulation')
+app = App(root)
+root.mainloop()
